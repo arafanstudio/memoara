@@ -939,33 +939,41 @@ export default function Home() {
           )}
         </div>
 
-        {/* Custom Alert Notification */}
+        {/* Custom Alert with Scaling Animation */}
         {showCustomAlert && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
-            <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-800 shadow-lg">
-              <CardContent className="p-4 flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-orange-800 dark:text-orange-200">
-                    Check unavailable — too early
-                  </p>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">
-                    Wait until the scheduled time to complete this reminder
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCustomAlert(false)}
-                  className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-200"
-                >
-                  ×
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <>
+            {/* Blurred Background Overlay with fade-in animation */}
+            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" />
+            
+            {/* Centered Alert Dialog with scaling animation */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="w-full max-w-md animate-in zoom-in-95 duration-200">
+                <Card className="border-border bg-background shadow-lg origin-center scale-[0.95] animate-in zoom-in-95 duration-200">
+                  <CardContent className="p-4 flex items-start gap-3">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center mt-0.5">
+                      <Clock className="w-5 h-5 text-accent-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground">
+                        Check unavailable — too early
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Wait until the scheduled time to complete this reminder
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCustomAlert(false)}
+                      className="text-muted-foreground hover:text-foreground hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </>
         )}
       </div>
         </>
