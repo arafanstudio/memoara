@@ -33,6 +33,7 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isPWAInstalled, setIsPWAInstalled] = useState(false)
   const [notificationPermission, setNotificationPermission] = useState("default")
+  const [showCustomAlert, setShowCustomAlert] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -347,8 +348,9 @@ export default function Home() {
         
         // Check if reminder time has passed or is current
         if (reminderTime > now) {
-          // Show alert if trying to complete before time
-          alert('Reminder belum bisa dicentang karena waktunya belum tiba!')
+          // Show custom alert if trying to complete before time
+          setShowCustomAlert(true)
+          setTimeout(() => setShowCustomAlert(false), 3000) // Auto hide after 3 seconds
           return r // Return unchanged reminder
         }
         
@@ -936,6 +938,35 @@ export default function Home() {
             })
           )}
         </div>
+
+        {/* Custom Alert Notification */}
+        {showCustomAlert && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
+            <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-800 shadow-lg">
+              <CardContent className="p-4 flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-orange-800 dark:text-orange-200">
+                    Check unavailable — too early
+                  </p>
+                  <p className="text-sm text-orange-600 dark:text-orange-400">
+                    Wait until the scheduled time to complete this reminder
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCustomAlert(false)}
+                  className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-200"
+                >
+                  ×
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
         </>
       )}
