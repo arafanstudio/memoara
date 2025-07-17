@@ -939,16 +939,26 @@ export default function Home() {
           )}
         </div>
 
-        {/* Custom Alert with Scaling Animation */}
-        {showCustomAlert && (
+        {/* Dynamic Island-style Alert - Centered with Blur */}
+        {showCustomAlert ? (
           <>
-            {/* Blurred Background Overlay with fade-in animation */}
-            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" />
+            {/* Blurred Background with fade animation */}
+            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300" />
             
-            {/* Centered Alert Dialog with scaling animation */}
+            {/* Centered Alert with Dynamic Island animation */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="w-full max-w-md animate-in zoom-in-95 duration-200">
-                <Card className="border-border bg-background shadow-lg origin-center scale-[0.95] animate-in zoom-in-95 duration-200">
+              <div className={`w-full max-w-md transform transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] 
+                ${showCustomAlert ? 
+                  'animate-in zoom-in-95' : 
+                  'animate-out zoom-out-95'
+                }`}
+              >
+                <Card className={`border-border bg-background shadow-lg rounded-xl overflow-hidden transition-all duration-300
+                  ${showCustomAlert ?
+                    'scale-100 opacity-100' :
+                    'scale-95 opacity-0'
+                  }`}
+                >
                   <CardContent className="p-4 flex items-start gap-3">
                     <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center mt-0.5">
                       <Clock className="w-5 h-5 text-accent-foreground" />
@@ -974,7 +984,7 @@ export default function Home() {
               </div>
             </div>
           </>
-        )}
+        ) : null}
       </div>
         </>
       )}
