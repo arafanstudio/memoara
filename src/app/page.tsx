@@ -340,15 +340,90 @@ export default function Home() {
 
   // Toggle completion
   const toggleComplete = (id) => {
-    setReminders(reminders.map(r => 
-      r.id === id 
-        ? { 
-            ...r, 
-            completed: !r.completed,
-            completedAt: !r.completed ? new Date().toISOString() : null
+    setReminders(reminders.map(r => {
+      if (r.id === id) {
+        const now = new Date()
+        const reminderTime = new Date(r.dateTime)
+        
+        // Check if reminder time has passed or is current
+        if (reminderTime > now) {
+          // Show alert if trying to complete before time
+          alert('Reminder belum bisa dicentang karena waktunya belum tiba!')
+          return r // Return unchanged reminder
+        }
+        
+        const newCompleted = !r.completed
+        
+        // If reminder is being marked as completed and has repeat setting,
+        // show completed state first, then schedule for next occurrence
+        if (!r.completed && newCompleted && r.repeat !== 'none') {
+          // First, mark as completed to show the visual effect
+          const completedReminder = {
+            ...r,
+            completed: true,
+            completedAt: new Date().toISOString()
           }
-        : r
-    ))
+          
+          // Set a timeout to handle the transition and rescheduling
+          setTimeout(() => {
+            setReminders(currentReminders => currentReminders.map(reminder => {
+              if (reminder.id === id) {
+                const currentDateTime = new Date(r.dateTime)
+                let nextDateTime = new Date(currentDateTime)
+                
+                switch (r.repeat) {
+                  case 'daily':
+                    nextDateTime.setDate(nextDateTime.getDate() + 1)
+                    break
+                  case 'weekly':
+                    nextDateTime.setDate(nextDateTime.getDate() + 7)
+                    break
+                  case 'monthly':
+                    nextDateTime.setMonth(nextDateTime.getMonth() + 1)
+                    break
+                  case 'yearly':
+                    nextDateTime.setFullYear(nextDateTime.getFullYear() + 1)
+                    break
+                }
+                
+                // Format the new date time for input field
+                const year = nextDateTime.getFullYear()
+                const month = String(nextDateTime.getMonth() + 1).padStart(2, '0')
+                const day = String(nextDateTime.getDate()).padStart(2, '0')
+                const hours = String(nextDateTime.getHours()).padStart(2, '0')
+                const minutes = String(nextDateTime.getMinutes()).padStart(2, '0')
+                const newDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`
+                
+                // Schedule notification for the new time if enabled
+                if (r.notification && notificationPermission === 'granted') {
+                  const updatedReminder = { ...r, dateTime: newDateTimeString }
+                  scheduleNotification(updatedReminder)
+                }
+                
+                // Return reminder with updated date time and reset to not completed
+                return {
+                  ...r,
+                  dateTime: newDateTimeString,
+                  completed: false,
+                  completedAt: null
+                }
+              }
+              return reminder
+            }))
+          }, 1500) // 1.5 second delay to show completed state
+          
+          return completedReminder
+        }
+        
+        // For non-repeat reminders or when unchecking, just toggle completion status
+        return {
+          ...r,
+          completed: newCompleted,
+          completedAt: newCompleted ? new Date().toISOString() : null
+        }
+      }
+      return r
+    }))
   }
 
   // Format date time
@@ -772,28 +847,36 @@ export default function Home() {
               const isOverdue = !reminder.completed && new Date(reminder.dateTime) <= new Date()
               
               return (
-                <Card key={reminder.id} className={`py-4 transition-all duration-200 hover:shadow-md ${
-                  reminder.completed ? 'opacity-70' : ''
+                <Card key={reminder.id} className={`py-4 transition-all duration-500 ease-in-out hover:shadow-md ${
+                  reminder.completed ? 'opacity-70 transform scale-95' : ''
                 } ${isOverdue ? 'border-red-200 dark:border-red-800' : ''}`}>
                   <CardContent className="p-4 py-0">
                     <div className="flex items-center space-x-3">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`rounded-full border ${reminder.completed ? 'bg-green-100 dark:bg-green-900' : ''}`}
+                        className={`rounded-full border transition-all duration-300 ${
+                          reminder.completed ? 'bg-green-100 dark:bg-green-900 border-green-500' : ''
+                        }`}
                         onClick={() => toggleComplete(reminder.id)}
                       >
-                        <Check className={`w-4 h-4 ${reminder.completed ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        <Check className={`w-4 h-4 transition-all duration-300 ${
+                          reminder.completed ? 'text-green-600' : 'text-muted-foreground'
+                        }`} />
                       </Button>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className={`font-semibold ${reminder.completed ? 'line-through text-muted-foreground' : ''}`}>
+                            <h3 className={`font-semibold transition-all duration-300 ${
+                              reminder.completed ? 'line-through text-muted-foreground' : ''
+                            }`}>
                               {reminder.title}
                             </h3>
                             {reminder.description && (
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className={`text-sm mt-1 transition-all duration-300 ${
+                                reminder.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground'
+                              }`}>
                                 {reminder.description}
                               </p>
                             )}
