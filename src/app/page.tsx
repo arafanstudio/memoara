@@ -18,7 +18,7 @@ import AlarmPage from '@/components/AlarmPage'
 import LoginButton from '@/components/LoginButton'
 import { useSession, signOut } from 'next-auth/react'
 import { useGoogleDriveSync } from '@/hooks/useGoogleDriveSync'
-import { AnimatePresence, motion } from "framer-motion"
+import { motion } from "framer-motion"
 
 export default function Home() {
   const { data: session } = useSession()
@@ -761,185 +761,125 @@ export default function Home() {
                 Add Reminder
               </Button>
             </DialogTrigger>
-            
-            <AnimatePresence>
-              {isAddDialogOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                  transition={{ 
-                    type: "spring",
-                    damping: 20,
-                    stiffness: 300,
-                    mass: 0.5
-                  }}
-                >
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                      >
-                        <DialogTitle>
-                          {editingReminder ? 'Edit Reminder' : 'Add Reminder'}
-                        </DialogTitle>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 }}
-                      >
-                        <DialogDescription>
-                          {editingReminder ? 'Edit your reminder details' : 'Create a new reminder to stay organized'}
-                        </DialogDescription>
-                      </motion.div>
-                    </DialogHeader>
-                    
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        <Label htmlFor="title" className="mb-1 ml-1">Title *</Label>
-                        <Input
-                          id="title"
-                          value={formData.title}
-                          onChange={(e) => setFormData({...formData, title: e.target.value})}
-                          placeholder="Enter reminder title..."
-                          required
-                        />
-                      </motion.div>
-                      
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.25 }}
-                      >
-                        <Label htmlFor="description" className="mb-1 ml-1">Description</Label>
-                        <Textarea
-                          id="description"
-                          value={formData.description}
-                          onChange={(e) => setFormData({...formData, description: e.target.value})}
-                          placeholder="Add a description (optional)..."
-                          rows={3}
-                        />
-                      </motion.div>
-                      
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        <Label htmlFor="dateTime" className="mb-1 ml-1">Date & Time *</Label>
-                        <Input
-                          id="dateTime"
-                          type="datetime-local"
-                          value={formData.dateTime}
-                          onChange={(e) => setFormData({...formData, dateTime: e.target.value})}
-                          required
-                        />
-                      </motion.div>
-                      
-                      <motion.div 
-                        className="grid grid-cols-2 gap-4"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.35 }}
-                      >
-                        <div>
-                          <Label htmlFor="priority" className="mb-1 ml-1">Priority</Label>
-                          <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {priorities.map(priority => (
-                                <SelectItem key={priority.value} value={priority.value}>
-                                  <div className="flex items-center space-x-2">
-                                    <div className={`w-3 h-3 rounded-full ${priority.color}`}></div>
-                                    <span>{priority.label}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="category" className="mb-1 ml-1">Category</Label>
-                          <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories.map(category => (
-                                <SelectItem key={category.value} value={category.value}>
-                                  <div className="flex items-center space-x-2">
-                                    <span>{category.icon}</span>
-                                    <span>{category.label}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </motion.div>
-                      
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 }}
-                      >
-                        <Label htmlFor="repeat" className="mb-1 ml-1">Repeat</Label>
-                        <Select value={formData.repeat} onValueChange={(value) => setFormData({...formData, repeat: value})}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {repeatOptions.map(option => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </motion.div>
-                      
-                      <motion.div 
-                        className="flex items-center space-x-2"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.45 }}
-                      >
-                        <Switch
-                          id="notification"
-                          checked={formData.notification}
-                          onCheckedChange={(checked) => setFormData({...formData, notification: checked})}
-                        />
-                        <Label htmlFor="notification">Enable notifications</Label>
-                      </motion.div>
-                      
-                      <motion.div 
-                        className="flex space-x-2 pt-4"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                      >
-                        <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)} className="flex-1">
-                          Cancel
-                        </Button>
-                        <Button type="submit" className="flex-1">
-                          {editingReminder ? 'Save Changes' : 'Create Reminder'}
-                        </Button>
-                      </motion.div>
-                    </form>
-                  </DialogContent>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingReminder ? 'Edit Reminder' : 'Add Reminder'}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingReminder ? 'Edit your reminder details' : 'Create a new reminder to stay organized'}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="title" className="mb-1 ml-1">Title *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    placeholder="Enter reminder title..."
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description" className="mb-1 ml-1">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Add a description (optional)..."
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="dateTime" className="mb-1 ml-1">Date & Time *</Label>
+                  <Input
+                    id="dateTime"
+                    type="datetime-local"
+                    value={formData.dateTime}
+                    onChange={(e) => setFormData({...formData, dateTime: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="priority" className="mb-1 ml-1">Priority</Label>
+                    <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priorities.map(priority => (
+                          <SelectItem key={priority.value} value={priority.value}>
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-3 h-3 rounded-full ${priority.color}`}></div>
+                              <span>{priority.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="category" className="mb-1 ml-1">Category</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category.value} value={category.value}>
+                            <div className="flex items-center space-x-2">
+                              <span>{category.icon}</span>
+                              <span>{category.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="repeat" className="mb-1 ml-1">Repeat</Label>
+                  <Select value={formData.repeat} onValueChange={(value) => setFormData({...formData, repeat: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {repeatOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="notification"
+                    checked={formData.notification}
+                    onCheckedChange={(checked) => setFormData({...formData, notification: checked})}
+                  />
+                  <Label htmlFor="notification">Enable notifications</Label>
+                </div>
+                
+                <div className="flex space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="flex-1">
+                    {editingReminder ? 'Save Changes' : 'Create Reminder'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
           </Dialog>
 
           {/* Filter Tabs */}
