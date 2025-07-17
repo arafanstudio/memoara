@@ -12,8 +12,6 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { AnimatedButton } from '@/components/ui/animated-button'
-import { AnimatedCard } from '@/components/ui/animated-card'
 import { Plus, Edit, Trash2, Check, Clock, Moon, Sun, Bell, Calendar, Filter, Settings } from 'lucide-react'
 import { requestNotificationPermission, showNotification, scheduleNotification, checkNotificationSupport } from '@/utils/notifications'
 import AlarmPage from '@/components/AlarmPage'
@@ -423,20 +421,20 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <AnimatedButton
+              <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowSettings(!showSettings)}
               >
                 <Settings className="w-5 h-5" />
-              </AnimatedButton>
-              <AnimatedButton
+              </Button>
+              <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleDarkMode}
               >
                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </AnimatedButton>
+              </Button>
             </div>
           </div>
         </div>

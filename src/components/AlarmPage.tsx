@@ -10,10 +10,6 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { AnimatedButton } from '@/components/ui/animated-button'
-import { AnimatedCard } from '@/components/ui/animated-card'
-import { PageTransition } from '@/components/ui/page-transition'
-import { useFadeIn, useStaggeredAnimation } from '@/hooks/useAnimations'
 import { Plus, Edit, Trash2, Clock, ArrowLeft, Volume2, VolumeX, Repeat, RotateCcw } from 'lucide-react'
 
 interface Alarm {
@@ -37,8 +33,6 @@ export default function AlarmPage({ onBack }: AlarmPageProps) {
   const [alarms, setAlarms] = useState<Alarm[]>([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null)
-  const headerAnimation = useFadeIn(100)
-  const visibleItems = useStaggeredAnimation(alarms.length, 150)
   
   const [formData, setFormData] = useState({
     time: '',
@@ -261,37 +255,33 @@ export default function AlarmPage({ onBack }: AlarmPageProps) {
   }
 
   return (
-    <PageTransition direction="right">
-      <div className="min-h-screen bg-background text-foreground">
-        {/* Header */}
-        <header 
-          className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50"
-          style={headerAnimation}
-        >
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
               <div className="flex items-center space-x-3">
-                <AnimatedButton variant="ghost" size="icon" onClick={onBack}>
-                  <ArrowLeft className="w-5 h-5" />
-                </AnimatedButton>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold">Alarms</h1>
-                    <p className="text-sm text-muted-foreground">Set your wake-up alarms</p>
-                  </div>
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">Alarms</h1>
+                  <p className="text-sm text-muted-foreground">Set your wake-up alarms</p>
                 </div>
               </div>
+            </div>
             
       {/* Add/Edit Alarm Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogTrigger asChild>
-          <AnimatedButton onClick={resetForm}>
+          <Button onClick={resetForm}>
             <Plus className="w-4 h-4 mr-2" />
             Add Alarm
-          </AnimatedButton>
+          </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -422,43 +412,35 @@ export default function AlarmPage({ onBack }: AlarmPageProps) {
       <div className="container mx-auto px-4 py-6">
         {/* Statistics */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <AnimatedCard className="p-0" animationType="slideUp" delay={200}>
+          <Card className="p-0">
             <CardContent className="p-4 flex flex-col items-center justify-center">
               <div className="text-2xl font-bold text-primary">{alarms.length}</div>
               <p className="text-sm text-muted-foreground">Total Alarms</p>
             </CardContent>
-          </AnimatedCard>
-          <AnimatedCard className="p-0" animationType="slideUp" delay={300}>
+          </Card>
+          <Card className="p-0">
             <CardContent className="p-4 flex flex-col items-center justify-center">
               <div className="text-2xl font-bold text-green-500">{alarms.filter(a => a.isActive).length}</div>
               <p className="text-sm text-muted-foreground">Active</p>
             </CardContent>
-          </AnimatedCard>
+          </Card>
         </div>
 
         {/* Alarms List */}
         <div className="space-y-4">
           {alarms.length === 0 ? (
-            <AnimatedCard animationType="fadeIn" delay={400}>
+            <Card>
               <CardContent className="p-8 text-center">
                 <div className="text-6xl mb-4">⏰</div>
                 <h3 className="text-lg font-semibold mb-2">No alarms set</h3>
                 <p className="text-muted-foreground">Tap the "Add Alarm" button<br />to create your first alarm</p>
               </CardContent>
-            </AnimatedCard>
+            </Card>
           ) : (
-            alarms.map((alarm, index) => (
-              <div
-                key={alarm.id}
-                style={{
-                  opacity: visibleItems.includes(index) ? 1 : 0,
-                  transform: visibleItems.includes(index) ? 'translateY(0)' : 'translateY(20px)',
-                  transition: 'all 0.4s ease-out'
-                }}
-              >
-                <Card className={`transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                  !alarm.isActive ? 'opacity-50' : ''
-                }`}>
+            alarms.map(alarm => (
+              <Card key={alarm.id} className={`transition-all duration-200 hover:shadow-md ${
+                !alarm.isActive ? 'opacity-50' : ''
+              }`}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -499,18 +481,18 @@ export default function AlarmPage({ onBack }: AlarmPageProps) {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <AnimatedButton
+                      <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(alarm)}
                       >
                         <Edit className="w-4 h-4" />
-                      </AnimatedButton>
+                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <AnimatedButton variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon">
                             <Trash2 className="w-4 h-4" />
-                          </AnimatedButton>
+                          </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -530,14 +512,12 @@ export default function AlarmPage({ onBack }: AlarmPageProps) {
                     </div>
                   </div>
                 </CardContent>
-                </Card>
-              </div>
+              </Card>
             ))
           )}
         </div>
       </div>
     </div>
-    </PageTransition>
   )
 }
 
