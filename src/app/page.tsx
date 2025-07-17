@@ -340,15 +340,63 @@ export default function Home() {
 
   // Toggle completion
   const toggleComplete = (id) => {
-    setReminders(reminders.map(r => 
-      r.id === id 
-        ? { 
-            ...r, 
-            completed: !r.completed,
-            completedAt: !r.completed ? new Date().toISOString() : null
+    setReminders(reminders.map(r => {
+      if (r.id === id) {
+        const newCompleted = !r.completed
+        
+        // If reminder is being marked as completed and has repeat setting,
+        // schedule it for the next occurrence instead of just marking as completed
+        if (!r.completed && newCompleted && r.repeat !== 'none') {
+          const currentDateTime = new Date(r.dateTime)
+          let nextDateTime = new Date(currentDateTime)
+          
+          switch (r.repeat) {
+            case 'daily':
+              nextDateTime.setDate(nextDateTime.getDate() + 1)
+              break
+            case 'weekly':
+              nextDateTime.setDate(nextDateTime.getDate() + 7)
+              break
+            case 'monthly':
+              nextDateTime.setMonth(nextDateTime.getMonth() + 1)
+              break
+            case 'yearly':
+              nextDateTime.setFullYear(nextDateTime.getFullYear() + 1)
+              break
           }
-        : r
-    ))
+          
+          // Format the new date time for input field
+          const year = nextDateTime.getFullYear()
+          const month = String(nextDateTime.getMonth() + 1).padStart(2, '0')
+          const day = String(nextDateTime.getDate()).padStart(2, '0')
+          const hours = String(nextDateTime.getHours()).padStart(2, '0')
+          const minutes = String(nextDateTime.getMinutes()).padStart(2, '0')
+          const newDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`
+          
+          // Schedule notification for the new time if enabled
+          if (r.notification && notificationPermission === 'granted') {
+            const updatedReminder = { ...r, dateTime: newDateTimeString }
+            scheduleNotification(updatedReminder)
+          }
+          
+          // Return reminder with updated date time and keep it active (not completed)
+          return {
+            ...r,
+            dateTime: newDateTimeString,
+            completed: false,
+            completedAt: null
+          }
+        }
+        
+        // For non-repeat reminders or when unchecking, just toggle completion status
+        return {
+          ...r,
+          completed: newCompleted,
+          completedAt: newCompleted ? new Date().toISOString() : null
+        }
+      }
+      return r
+    }))
   }
 
   // Format date time
