@@ -342,6 +342,16 @@ export default function Home() {
   const toggleComplete = (id) => {
     setReminders(reminders.map(r => {
       if (r.id === id) {
+        const now = new Date()
+        const reminderTime = new Date(r.dateTime)
+        
+        // Check if reminder time has passed or is current
+        if (reminderTime > now) {
+          // Show alert if trying to complete before time
+          alert('Reminder belum bisa dicentang karena waktunya belum tiba!')
+          return r // Return unchanged reminder
+        }
+        
         const newCompleted = !r.completed
         
         // If reminder is being marked as completed and has repeat setting,
