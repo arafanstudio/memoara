@@ -630,6 +630,7 @@ export default function Home() {
                     <Button 
                       size="xs" 
                       variant="outline" 
+                      className="p-1 px-2 text-xs"
                       onClick={handleManualSync}
                       disabled={syncStatus.isLoading}
                     >
@@ -638,6 +639,7 @@ export default function Home() {
                     <Button 
                       size="xs" 
                       variant="outline" 
+                      className="p-1 px-2 text-xs"
                       onClick={handleLoadFromCloud}
                       disabled={syncStatus.isLoading}
                     >
@@ -646,6 +648,7 @@ export default function Home() {
                     <Button 
                       size="xs" 
                       variant="destructive" 
+                      className="p-1 px-2 text-xs"
                       onClick={handleDeleteBackup}
                       disabled={syncStatus.isLoading}
                     >
@@ -654,6 +657,7 @@ export default function Home() {
                     <Button 
                       size="xs" 
                       variant="outline" 
+                      className="p-1 px-2 text-xs"
                       onClick={() => signOut()}
                     >
                       Disconnect
