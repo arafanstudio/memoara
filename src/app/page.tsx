@@ -18,6 +18,7 @@ import AlarmPage from '@/components/AlarmPage'
 import LoginButton from '@/components/LoginButton'
 import { useSession, signOut } from 'next-auth/react'
 import { useGoogleDriveSync } from '@/hooks/useGoogleDriveSync'
+import { motion } from "framer-motion"
 
 export default function Home() {
   const { data: session } = useSession()
@@ -939,52 +940,77 @@ export default function Home() {
           )}
         </div>
 
-        {/* Dynamic Island-style Alert - Centered with Blur */}
-        {showCustomAlert ? (
+        {/* Enhanced Dynamic Island Alert */}
+        {showCustomAlert && (
           <>
-            {/* Blurred Background with fade animation */}
-            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300" />
+            {/* Blurred Background with smooth fade */}
+            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300 ease-out" />
             
-            {/* Centered Alert with Dynamic Island animation */}
+            {/* Centered Alert with Dynamic Island physics */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className={`w-full max-w-md transform transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] 
-                ${showCustomAlert ? 
-                  'animate-in zoom-in-95' : 
-                  'animate-out zoom-out-95'
-                }`}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: -20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                transition={{
+                  type: "spring",
+                  damping: 15,
+                  stiffness: 200,
+                  mass: 0.5
+                }}
+                className="w-full max-w-md"
               >
-                <Card className={`border-border bg-background shadow-lg rounded-xl overflow-hidden transition-all duration-300
-                  ${showCustomAlert ?
-                    'scale-100 opacity-100' :
-                    'scale-95 opacity-0'
-                  }`}
-                >
+                <Card className="border-border bg-background shadow-lg rounded-xl overflow-hidden">
                   <CardContent className="p-4 flex items-start gap-3">
-                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center mt-0.5">
-                      <Clock className="w-5 h-5 text-accent-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">
-                        Check unavailable — too early
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Wait until the scheduled time to complete this reminder
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowCustomAlert(false)}
-                      className="text-muted-foreground hover:text-foreground hover:bg-transparent"
+                    <motion.div 
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ 
+                        delay: 0.1,
+                        type: "spring",
+                        stiffness: 300
+                      }}
+                      className="flex-shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center mt-0.5"
                     >
-                      ×
-                    </Button>
+                      <Clock className="w-5 h-5 text-accent-foreground" />
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <motion.p 
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="font-medium text-foreground"
+                      >
+                        Check unavailable — too early
+                      </motion.p>
+                      <motion.p 
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-sm text-muted-foreground mt-1"
+                      >
+                        Wait until the scheduled time<br />to complete this reminder
+                      </motion.p>
+                    </div>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCustomAlert(false)}
+                        className="text-muted-foreground hover:text-foreground hover:bg-transparent"
+                      >
+                        ×
+                      </Button>
+                    </motion.div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             </div>
           </>
-        ) : null}
+        )}
       </div>
         </>
       )}
