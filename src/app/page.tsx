@@ -628,7 +628,7 @@ export default function Home() {
                 {session && (
                   <div className="flex flex-row space-x-2 flex-wrap mt-3 justify-end">
                     <Button 
-                      size="sm" 
+                      size="xs" 
                       variant="outline" 
                       onClick={handleManualSync}
                       disabled={syncStatus.isLoading}
@@ -636,7 +636,7 @@ export default function Home() {
                       {syncStatus.isLoading ? 'Syncing...' : 'Sync'}
                     </Button>
                     <Button 
-                      size="sm" 
+                      size="xs" 
                       variant="outline" 
                       onClick={handleLoadFromCloud}
                       disabled={syncStatus.isLoading}
@@ -644,7 +644,7 @@ export default function Home() {
                       Load
                     </Button>
                     <Button 
-                      size="sm" 
+                      size="xs" 
                       variant="destructive" 
                       onClick={handleDeleteBackup}
                       disabled={syncStatus.isLoading}
@@ -652,7 +652,7 @@ export default function Home() {
                       Delete Backup
                     </Button>
                     <Button 
-                      size="sm" 
+                      size="xs" 
                       variant="outline" 
                       onClick={() => signOut()}
                     >
