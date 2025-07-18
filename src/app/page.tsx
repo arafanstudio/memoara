@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { Plus, Edit, Trash2, Check, Clock, Moon, Sun, Bell, Calendar, Filter, Settings } from 'lucide-react'
+import { Plus, Edit, Trash2, Check, Clock, Moon, Sun, Bell, Calendar, Filter, Settings, Gamepad2 } from 'lucide-react'
 import { requestNotificationPermission, showNotification, scheduleNotification, checkNotificationSupport } from '@/utils/notifications'
 import AlarmPage from '@/components/AlarmPage'
+import GamificationPage from '@/components/GamificationPage'
 import LoginButton from '@/components/LoginButton'
 import { useSession, signOut } from 'next-auth/react'
 import { useGoogleDriveSync } from '@/hooks/useGoogleDriveSync'
@@ -31,6 +32,7 @@ export default function Home() {
   const [currentFilter, setCurrentFilter] = useState('all')
   const [showSettings, setShowSettings] = useState(false)
   const [showAlarmPage, setShowAlarmPage] = useState(false)
+  const [showGamification, setShowGamification] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isPWAInstalled, setIsPWAInstalled] = useState(false)
   const [notificationPermission, setNotificationPermission] = useState("default")
@@ -537,6 +539,8 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {showAlarmPage ? (
         <AlarmPage onBack={() => setShowAlarmPage(false)} />
+      ) : showGamification ? (
+        <GamificationPage onBack={() => setShowGamification(false)} />
       ) : (
         <>
           {/* Header */}
@@ -554,6 +558,13 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowGamification(!showGamification)}
+              >
+                <Gamepad2 className="w-5 h-5" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
