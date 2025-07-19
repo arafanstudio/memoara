@@ -719,7 +719,7 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground">
                       {supabaseUser 
                         ? `Connected as ${supabaseUser.email}` 
-                        : 'Link your Google account to sync reminders to Supabase'
+                        : 'Link to sync reminders'
                       }
                       {supabaseError && (
                         <span className="block text-xs text-red-600 dark:text-red-400">
