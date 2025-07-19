@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { Plus, Edit, Trash2, Check, Clock, Moon, Sun, Bell, Calendar, Filter, Settings, Gamepad2 } from 'lucide-react'
+import { Plus, Edit, Trash2, Check, Clock, Moon, Sun, Bell, Calendar, Filter, Settings, Gamepad2, Wifi, WifiOff } from 'lucide-react'
 import { requestNotificationPermission, showNotification, scheduleNotification, checkNotificationSupport } from '@/utils/notifications'
 import AlarmPage from '@/components/AlarmPage'
 import GamificationPageSupabase from '@/components/GamificationPageSupabase'
@@ -700,7 +700,11 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    {isOnline ? (
+                      <Wifi className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <WifiOff className="w-5 h-5 text-gray-500" />
+                    )}
                     <Badge variant={isOnline ? "default" : "secondary"}>
                       {isOnline ? "Online" : "Offline"}
                     </Badge>
