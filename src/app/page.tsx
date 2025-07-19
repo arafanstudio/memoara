@@ -289,14 +289,13 @@ export default function Home() {
     let completedStatus = editingReminder ? editingReminder.completed : false;
     let newDateTime = formData.dateTime;
   
-    // 🛠️ Hanya jika reminder repeat dan waktu lampau, hitung occurrence baru
     if (editingReminder && editingReminder.completed) {
       if (formData.repeat !== 'none') {
         completedStatus = false;
-  
+    
         if (reminderDateTime <= now) {
-          // ⛔ Jangan pakai .toISOString() di sini
-          newDateTime = calculateNextOccurrence(now, formData.repeat);
+          // Gunakan waktu reminder lama, bukan waktu saat ini
+          newDateTime = calculateNextOccurrence(reminderDateTime, formData.repeat);
         }
       } else {
         if (reminderDateTime > now) {
@@ -311,7 +310,7 @@ export default function Home() {
       completed: completedStatus,
       createdAt: editingReminder ? editingReminder.createdAt : new Date().toISOString(),
       completedAt: completedStatus ? (editingReminder?.completedAt || new Date().toISOString()) : null,
-      dateTime: newDateTime // 🔧 Pastikan ini tidak dalam UTC
+      dateTime: newDateTime
     };
   
     const updatedReminders = editingReminder
@@ -375,7 +374,7 @@ export default function Home() {
     setFormData({
       title: reminder.title,
       description: reminder.description || '',
-      dateTime: cleanedDateTime,   // ✅ Dijamin cocok dengan input
+      dateTime: cleanedDateTime,
       priority: reminder.priority,
       category: reminder.category,
       repeat: reminder.repeat,
