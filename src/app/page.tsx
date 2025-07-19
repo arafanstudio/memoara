@@ -15,15 +15,25 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, Check, Clock, Moon, Sun, Bell, Calendar, Filter, Settings, Gamepad2 } from 'lucide-react'
 import { requestNotificationPermission, showNotification, scheduleNotification, checkNotificationSupport } from '@/utils/notifications'
 import AlarmPage from '@/components/AlarmPage'
-import GamificationPage from '@/components/GamificationPage'
-import LoginButton from '@/components/LoginButton'
-import { useSession, signOut } from 'next-auth/react'
-import { useGoogleDriveSync } from '@/hooks/useGoogleDriveSync'
+import GamificationPageSupabase from '@/components/GamificationPageSupabase'
+import LoginButtonSupabase from '@/components/LoginButtonSupabase'
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
+import { useSupabaseReminders } from '@/hooks/useSupabaseReminders'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { motion } from "framer-motion"
 
 export default function Home() {
-  const { data: session } = useSession()
-  const { syncStatus, saveToCloud, loadFromCloud, deleteFromCloud, clearMessages } = useGoogleDriveSync()
+  const isOnline = useOnlineStatus()
+  const { user: supabaseUser } = useSupabaseAuth()
+  const { 
+    reminders: supabaseReminders, 
+    loading: supabaseLoading, 
+    error: supabaseError,
+    loadReminders: loadFromSupabase,
+    saveAllReminders: saveToSupabase,
+    deleteAllReminders: deleteFromSupabase,
+    clearMessages: clearSupabaseMessages
+  } = useSupabaseReminders()
   
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [reminders, setReminders] = useState([])
@@ -153,9 +163,13 @@ export default function Home() {
     }
   }, [])
 
-  // Save reminders to localStorage only (no auto-sync)
+  // Save reminders to localStorage and track changes
   useEffect(() => {
     localStorage.setItem("reminders", JSON.stringify(reminders))
+    // Track when local changes are made
+    if (reminders.length > 0) {
+      localStorage.setItem('lastLocalChange', new Date().toISOString())
+    }
   }, [reminders])
 
   // Toggle dark mode
@@ -182,19 +196,33 @@ export default function Home() {
     }
   }
 
-  // Load from cloud when user signs in (auto-load preserved)
+  // Load from Supabase when user signs in and online
   useEffect(() => {
-    if (session && reminders.length === 0) {
-      loadFromCloud().then(result => {
+    if (supabaseUser && isOnline && reminders.length === 0) {
+      loadFromSupabase().then(result => {
         if (result.success && result.reminders.length > 0) {
           setReminders(result.reminders)
-          showNotification('Reminders Synced!', {
-            body: `${result.reminders.length} reminders loaded from Google Drive.`
-          })
         }
       })
     }
-  }, [session])
+  }, [supabaseUser, isOnline])
+
+  // Auto-sync when coming back online
+  useEffect(() => {
+    if (isOnline && supabaseUser && reminders.length > 0) {
+      // Check if there are local changes to sync
+      const lastSyncTime = localStorage.getItem('lastSyncTime')
+      const lastLocalChange = localStorage.getItem('lastLocalChange')
+      
+      if (!lastSyncTime || (lastLocalChange && new Date(lastLocalChange) > new Date(lastSyncTime))) {
+        saveToSupabase(reminders).then(result => {
+          if (result.success) {
+            localStorage.setItem('lastSyncTime', new Date().toISOString())
+          }
+        })
+      }
+    }
+  }, [isOnline])
 
   // Request notification permission
   const handleNotificationPermission = async () => {
@@ -204,50 +232,6 @@ export default function Home() {
       showNotification('Notifications Enabled!', {
         body: 'You will receive notifications for scheduled reminders.'
       })
-    }
-  }
-
-  // Manual sync functions
-  const handleManualSync = async () => {
-    clearMessages()
-    const result = await saveToCloud(reminders)
-    if (result.success) {
-      showNotification('Sync Complete!', {
-        body: 'Your reminders have been saved to Google Drive.'
-      })
-    }
-  }
-
-  const handleLoadFromCloud = async () => {
-    clearMessages()
-    const result = await loadFromCloud()
-    if (result.success && result.reminders.length > 0) {
-      // Merge with existing reminders
-      const existingIds = new Set(reminders.map(r => r.id))
-      const newReminders = result.reminders.filter(r => !existingIds.has(r.id))
-      
-      if (newReminders.length > 0) {
-        setReminders(prev => [...prev, ...newReminders])
-        showNotification('Reminders Loaded!', {
-          body: `${newReminders.length} new reminders loaded from Google Drive.`
-        })
-      } else {
-        showNotification('Already Up to Date!', {
-          body: 'No new reminders found in Google Drive.'
-        })
-      }
-    }
-  }
-
-  const handleDeleteBackup = async () => {
-    if (confirm('Are you sure you want to delete your backup from Google Drive? This action cannot be undone.')) {
-      clearMessages()
-      const result = await deleteFromCloud()
-      if (result.success) {
-        showNotification('Backup Deleted!', {
-          body: 'Your backup has been removed from Google Drive.'
-        })
-      }
     }
   }
 
@@ -293,59 +277,66 @@ export default function Home() {
   // Add or update reminder
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+  
     if (!formData.title.trim() || !formData.dateTime) {
       alert('Please complete the title and time for the reminder');
       return;
     }
-
+  
     const now = new Date();
     const reminderDateTime = new Date(formData.dateTime);
-    
+  
     let completedStatus = editingReminder ? editingReminder.completed : false;
     let newDateTime = formData.dateTime;
-    
-    // Handle repeat settings when editing a completed reminder
+  
+    // 🛠️ Hanya jika reminder repeat dan waktu lampau, hitung occurrence baru
     if (editingReminder && editingReminder.completed) {
       if (formData.repeat !== 'none') {
-        // For repeat reminders, always reset completion status
         completedStatus = false;
-        
-        // If the edited time is in the past, calculate next occurrence
+  
         if (reminderDateTime <= now) {
+          // ⛔ Jangan pakai .toISOString() di sini
           newDateTime = calculateNextOccurrence(now, formData.repeat);
         }
       } else {
-        // For non-repeat reminders, only reset if editing to future date
         if (reminderDateTime > now) {
           completedStatus = false;
         }
       }
     }
-
+  
     const reminderData = {
       ...formData,
       id: editingReminder ? editingReminder.id : Date.now(),
       completed: completedStatus,
       createdAt: editingReminder ? editingReminder.createdAt : new Date().toISOString(),
       completedAt: completedStatus ? (editingReminder?.completedAt || new Date().toISOString()) : null,
-      dateTime: newDateTime
+      dateTime: newDateTime // 🔧 Pastikan ini tidak dalam UTC
     };
-
-    if (editingReminder) {
-      setReminders(reminders.map(r => r.id === editingReminder.id ? reminderData : r));
-    } else {
-      setReminders([...reminders, reminderData]);
-    }
-
-    // Schedule notification if enabled and permission granted
+  
+    const updatedReminders = editingReminder
+      ? reminders.map(r => r.id === editingReminder.id ? reminderData : r)
+      : [...reminders, reminderData];
+  
+    setReminders(updatedReminders);
+  
     if (reminderData.notification && notificationPermission === 'granted') {
       scheduleNotification(reminderData);
     }
-
+  
+    if (isOnline && supabaseUser) {
+      setTimeout(() => {
+        saveToSupabase(updatedReminders).then(result => {
+          if (result.success) {
+            localStorage.setItem('lastSyncTime', new Date().toISOString());
+          }
+        });
+      }, 100);
+    }
+  
     resetForm();
     setIsAddDialogOpen(false);
-  }
+  };  
 
   // Helper function to calculate next occurrence for repeat reminders
   const calculateNextOccurrence = (fromDate, repeatType) => {
@@ -378,131 +369,176 @@ export default function Home() {
 
   // Edit reminder
   const handleEdit = (reminder) => {
+    // Ambil hanya bagian 'YYYY-MM-DDTHH:mm' (tanpa detik, tanpa Z)
+    const cleanedDateTime = reminder.dateTime.substring(0, 16)
+  
     setFormData({
       title: reminder.title,
       description: reminder.description || '',
-      dateTime: reminder.dateTime,
+      dateTime: cleanedDateTime,   // ✅ Dijamin cocok dengan input
       priority: reminder.priority,
       category: reminder.category,
       repeat: reminder.repeat,
       notification: reminder.notification
-    });
-    
-    setEditingReminder(reminder);
-    setIsAddDialogOpen(true);
+    })
+  
+    setEditingReminder(reminder)
+    setIsAddDialogOpen(true)
   }
+  
+  
 
   // Delete reminder
   const handleDelete = (id) => {
-    setReminders(reminders.filter(r => r.id !== id))
+    const updatedReminders = reminders.filter(r => r.id !== id)
+    setReminders(updatedReminders)
+    
+    // Auto-sync to Supabase after deletion
+    if (isOnline && supabaseUser) {
+      setTimeout(() => {
+        saveToSupabase(updatedReminders).then(result => {
+          if (result.success) {
+            localStorage.setItem('lastSyncTime', new Date().toISOString())
+          }
+        })
+      }, 100) // Small delay to ensure state is updated
+    }
   }
 
   // Toggle completion
   const toggleComplete = (id) => {
-    setReminders(reminders.map(r => {
-      if (r.id === id) {
-        const now = new Date()
-        const reminderTime = new Date(r.dateTime)
-        
-        // Check if reminder time has passed or is current
-        if (reminderTime > now) {
-          // Show custom alert if trying to complete before time
-          setShowCustomAlert(true)
-          setTimeout(() => setShowCustomAlert(false), 3000) // Auto hide after 3 seconds
-          return r // Return unchanged reminder
-        }
-        
-        const newCompleted = !r.completed
-        
-        // If reminder is being marked as completed and has repeat setting,
-        // show completed state first, then schedule for next occurrence
-        if (!r.completed && newCompleted && r.repeat !== 'none') {
-          // First, mark as completed to show the visual effect
-          const completedReminder = {
-            ...r,
-            completed: true,
-            completedAt: new Date().toISOString()
+    const targetReminder = reminders.find(r => r.id === id)
+    if (!targetReminder) return
+
+    const now = new Date()
+    const reminderTime = new Date(targetReminder.dateTime)
+    
+    // Check if reminder time has passed or is current
+    if (reminderTime > now) {
+      // Show custom alert if trying to complete before time
+      setShowCustomAlert(true)
+      setTimeout(() => setShowCustomAlert(false), 3000) // Auto hide after 3 seconds
+      return
+    }
+    
+    const newCompleted = !targetReminder.completed
+    
+    // If reminder is being marked as completed and has repeat setting,
+    // show completed state first, then schedule for next occurrence
+    if (!targetReminder.completed && newCompleted && targetReminder.repeat !== 'none') {
+      // First, mark as completed to show the visual effect
+      setReminders(prev => prev.map(r => 
+        r.id === id 
+          ? { ...r, completed: true, completedAt: new Date().toISOString() }
+          : r
+      ))
+      
+      // Set a timeout to handle the transition and rescheduling
+      setTimeout(() => {
+        setReminders(currentReminders => {
+          const currentDateTime = new Date(targetReminder.dateTime)
+          let nextDateTime = new Date(currentDateTime)
+          
+          switch (targetReminder.repeat) {
+            case 'daily':
+              nextDateTime.setDate(nextDateTime.getDate() + 1)
+              break
+            case 'weekly':
+              nextDateTime.setDate(nextDateTime.getDate() + 7)
+              break
+            case 'monthly':
+              nextDateTime.setMonth(nextDateTime.getMonth() + 1)
+              break
+            case 'yearly':
+              nextDateTime.setFullYear(nextDateTime.getFullYear() + 1)
+              break
           }
           
-          // Set a timeout to handle the transition and rescheduling
-          setTimeout(() => {
-            setReminders(currentReminders => currentReminders.map(reminder => {
-              if (reminder.id === id) {
-                const currentDateTime = new Date(r.dateTime)
-                let nextDateTime = new Date(currentDateTime)
-                
-                switch (r.repeat) {
-                  case 'daily':
-                    nextDateTime.setDate(nextDateTime.getDate() + 1)
-                    break
-                  case 'weekly':
-                    nextDateTime.setDate(nextDateTime.getDate() + 7)
-                    break
-                  case 'monthly':
-                    nextDateTime.setMonth(nextDateTime.getMonth() + 1)
-                    break
-                  case 'yearly':
-                    nextDateTime.setFullYear(nextDateTime.getFullYear() + 1)
-                    break
-                }
-                
-                // Format the new date time for input field
-                const year = nextDateTime.getFullYear()
-                const month = String(nextDateTime.getMonth() + 1).padStart(2, '0')
-                const day = String(nextDateTime.getDate()).padStart(2, '0')
-                const hours = String(nextDateTime.getHours()).padStart(2, '0')
-                const minutes = String(nextDateTime.getMinutes()).padStart(2, '0')
-                const newDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`
-                
-                // Schedule notification for the new time if enabled
-                if (r.notification && notificationPermission === 'granted') {
-                  const updatedReminder = { ...r, dateTime: newDateTimeString }
-                  scheduleNotification(updatedReminder)
-                }
-                
-                // Return reminder with updated date time and reset to not completed
-                return {
-                  ...r,
+          // Format the new date time for input field
+          const year = nextDateTime.getFullYear()
+          const month = String(nextDateTime.getMonth() + 1).padStart(2, '0')
+          const day = String(nextDateTime.getDate()).padStart(2, '0')
+          const hours = String(nextDateTime.getHours()).padStart(2, '0')
+          const minutes = String(nextDateTime.getMinutes()).padStart(2, '0')
+          const newDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`
+          
+          // Schedule notification for the new time if enabled
+          if (targetReminder.notification && notificationPermission === 'granted') {
+            const updatedReminder = { ...targetReminder, dateTime: newDateTimeString }
+            scheduleNotification(updatedReminder)
+          }
+          
+          // Update the reminder with new date time and reset completion status
+          // This keeps the same ID to avoid duplication
+          const updatedReminders = currentReminders.map(reminder => 
+            reminder.id === id 
+              ? {
+                  ...targetReminder,
                   dateTime: newDateTimeString,
                   completed: false,
                   completedAt: null
                 }
-              }
-              return reminder
-            }))
-          }, 1500) // 1.5 second delay to show completed state
+              : reminder
+          )
           
-          return completedReminder
-        }
-        
-        // For non-repeat reminders or when unchecking, just toggle completion status
-        return {
-          ...r,
-          completed: newCompleted,
-          completedAt: newCompleted ? new Date().toISOString() : null
-        }
+          // Auto-sync to Supabase after state update
+          if (isOnline && supabaseUser) {
+            saveToSupabase(updatedReminders).then(result => {
+              if (result.success) {
+                localStorage.setItem('lastSyncTime', new Date().toISOString())
+              }
+            })
+          }
+          
+          return updatedReminders
+        })
+      }, 1500) // 1.5 second delay to show completed state
+    } else {
+      // For non-repeat reminders or when unchecking, just toggle completion status
+      const updatedReminders = reminders.map(r => 
+        r.id === id 
+          ? {
+              ...r,
+              completed: newCompleted,
+              completedAt: newCompleted ? new Date().toISOString() : null
+            }
+          : r
+      )
+      
+      setReminders(updatedReminders)
+      
+      // Auto-sync to Supabase immediately for non-repeat reminders
+      if (isOnline && supabaseUser) {
+        setTimeout(() => {
+          saveToSupabase(updatedReminders).then(result => {
+            if (result.success) {
+              localStorage.setItem('lastSyncTime', new Date().toISOString())
+            }
+          })
+        }, 100) // Small delay to ensure state is updated
       }
-      return r
-    }))
+    }
   }
 
   // Format date time
   const formatDateTime = (dateTime) => {
-    const date = new Date(dateTime)
+    // Parse manual dari string, jangan pakai new Date()
+    const [datePart, timePart] = dateTime.split('T')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
+  
+    const reminderDate = new Date(year, month - 1, day, hour, minute)
     const now = new Date()
-
-    // Set both dates to start of day for comparison
+  
+    // Hitung selisih hari
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const startOfReminderDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
+    const startOfReminderDay = new Date(year, month - 1, day)
+  
     const diffTime = startOfReminderDay.getTime() - startOfToday.getTime()
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
-    
-    const timeStr = date.toLocaleTimeString("id-ID", { 
-      hour: "2-digit", 
-      minute: "2-digit" 
-    })
-    
+  
+    const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+  
     if (diffDays === 0) {
       return `Today, ${timeStr}`
     } else if (diffDays === 1) {
@@ -510,19 +546,15 @@ export default function Home() {
     } else if (diffDays === -1) {
       return `Yesterday, ${timeStr}`
     } else if (diffDays > 1 && diffDays <= 7) {
-      return `In ${diffDays} days, ${timeStr}`;
+      return `In ${diffDays} days, ${timeStr}`
     } else if (diffDays < -1 && diffDays >= -7) {
       return `${Math.abs(diffDays)} days ago, ${timeStr}`
     } else {
-      return date.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      })
+      // Tampilkan format lokal
+      return `${day} ${reminderDate.toLocaleString('id-ID', { month: 'short' })} ${year}, ${timeStr}`
     }
   }
+  
 
   // Get priority color
   const getPriorityColor = (priority) => {
@@ -540,7 +572,7 @@ export default function Home() {
       {showAlarmPage ? (
         <AlarmPage onBack={() => setShowAlarmPage(false)} />
       ) : showGamification ? (
-        <GamificationPage onBack={() => setShowGamification(false)} />
+        <GamificationPageSupabase onBack={() => setShowGamification(false)} />
       ) : (
         <>
           {/* Header */}
@@ -660,76 +692,47 @@ export default function Home() {
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>Google Account</Label>
+                    <Label>Connection Status</Label>
                     <p className="text-sm text-muted-foreground">
-                      {session 
-                        ? `Connected as ${session.user?.email}` 
-                        : 'Link your Google account to sync reminders'
+                      {isOnline 
+                        ? 'Online - Auto-sync enabled' 
+                        : 'Offline - Data saved locally'
                       }
-                      {session && syncStatus.lastSync && (
-                        <span className="block text-xs text-green-600 dark:text-green-400">
-                          Last sync: {new Date(syncStatus.lastSync).toLocaleString('id-ID')}
-                        </span>
-                      )}
-                      {syncStatus.error && (
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <Badge variant={isOnline ? "default" : "secondary"}>
+                      {isOnline ? "Online" : "Offline"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Supabase Account</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {supabaseUser 
+                        ? `Connected as ${supabaseUser.email}` 
+                        : 'Link your Google account to sync reminders to Supabase'
+                      }
+                      {supabaseError && (
                         <span className="block text-xs text-red-600 dark:text-red-400">
-                          Error: {syncStatus.error}
-                        </span>
-                      )}
-                      {syncStatus.success && (
-                        <span className="block text-xs text-green-600 dark:text-green-400">
-                          {syncStatus.success}
+                          Error: {supabaseError}
                         </span>
                       )}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {session ? (
+                    {supabaseUser ? (
                       <Badge variant="default">Connected</Badge>
                     ) : (
-                      <LoginButton />
+                      <LoginButtonSupabase />
                     )}
                   </div>
                 </div>
-                {session && (
-                  <div className="flex flex-row space-x-2 flex-wrap mt-3 justify-end">
-                    <Button 
-                      size="xs" 
-                      variant="outline" 
-                      className="p-1 px-2 text-xs"
-                      onClick={handleManualSync}
-                      disabled={syncStatus.isLoading}
-                    >
-                      {syncStatus.isLoading ? 'Syncing...' : 'Sync'}
-                    </Button>
-                    <Button 
-                      size="xs" 
-                      variant="outline" 
-                      className="p-1 px-2 text-xs"
-                      onClick={handleLoadFromCloud}
-                      disabled={syncStatus.isLoading}
-                    >
-                      Load
-                    </Button>
-                    <Button 
-                      size="xs" 
-                      variant="destructive" 
-                      className="p-1 px-2 text-xs"
-                      onClick={handleDeleteBackup}
-                      disabled={syncStatus.isLoading}
-                    >
-                      Delete Backup
-                    </Button>
-                    <Button 
-                      size="xs" 
-                      variant="outline" 
-                      className="p-1 px-2 text-xs"
-                      onClick={() => signOut()}
-                    >
-                      Disconnect
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
