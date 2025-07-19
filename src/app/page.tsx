@@ -715,7 +715,7 @@ export default function Home() {
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>Supabase Account</Label>
+                    <Label>Google Account</Label>
                     <p className="text-sm text-muted-foreground">
                       {supabaseUser 
                         ? `Connected as ${supabaseUser.email}` 

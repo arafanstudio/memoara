@@ -28,7 +28,7 @@ export default function LoginButtonSupabase() {
   return (
     <Button variant="outline" size="sm" onClick={signInWithGoogle}>
       <LogIn className="w-4 h-4 mr-2" />
-      Sign In (Supabase)
+      Sign In
     </Button>
   )
 }

@@ -271,7 +271,7 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
 
       <div className="container mx-auto px-4 py-6">
         {/* Show demo notice for non-authenticated users */}
-        {!user && (
+        {/* {!user && (
           <Card className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -287,7 +287,7 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {isLoading ? (
           <div className="text-center py-12">
