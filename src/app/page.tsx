@@ -83,6 +83,11 @@ export default function Home() {
     { value: 'yearly', label: 'Yearly' }
   ]
 
+  const closeSettings = () => {
+    setDragY(0)
+    setShowSettings(false)
+  }
+
   useEffect(() => {
     const adjustZoomForMobileRatio = () => {
       const isMobile = window.innerWidth <= 768
@@ -600,7 +605,10 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowSettings(!showSettings)}
+                onClick={() => {
+                  setDragY(0) // Reset drag position
+                  setShowSettings(!showSettings)
+                }}
               >
                 <motion.div
                   whileTap={{ scale: 0.9 }}
@@ -631,28 +639,43 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.1 }}
                 className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm z-40"
-                onClick={() => setShowSettings(false)}
+                onClick={closeSettings}
               />
               
               {/* Settings panel */}
               <motion.div
+                key="settings-panel"
                 drag="y"
                 dragConstraints={{ top: 0 }}
-                onDrag={(_, info) => setDragY(Math.max(0, info.offset.y))}
+                onDrag={(_, info) => {
+                  // Only allow dragging downward
+                  if (info.offset.y > 0) {
+                    setDragY(info.offset.y)
+                  }
+                }}
                 onDragEnd={(_, info) => {
+                  // Close if dragged down enough or with enough velocity
                   if (info.offset.y > 100 || info.velocity.y > 500) {
-                    setShowSettings(false)
+                    closeSettings()
                   } else {
+                    // Return to open position if not dragged enough
                     setDragY(0)
                   }
                 }}
                 style={{ y: dragY }}
                 initial={{ y: "100%" }}
-                animate={{ y: dragY > 0 ? dragY : 0 }}
+                animate={{ y: dragY }}
                 exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                transition={{
+                  type: "spring",
+                  damping: 40,
+                  stiffness: 400,
+                  // Reset animation when opening
+                  restDelta: 0.001,
+                  restSpeed: 0.001,
+                }}
                 className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card shadow-xl border-t touch-none max-h-[90vh] overflow-y-auto"
               >
                 <div className="p-4">
