@@ -10,6 +10,7 @@ import { ArrowLeft, User, Trophy, Zap, Shield, Heart, Brain, CheckCircle, Circle
 import { useSupabaseGamification } from '@/hooks/useSupabaseGamification'
 import { createClient } from '@/utils/supabase/client'
 import { User as SupabaseUser } from '@supabase/supabase-js'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface Quest {
   id: number
@@ -146,17 +147,34 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
   const totalQuests = currentQuests.length
   const completionPercentage = totalQuests > 0 ? (completedQuests / totalQuests) * 100 : 0
 
-  // Show loading state only for initial auth check
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p>Loading...</p>
+  // Skeleton loading components
+  const QuestSkeleton = () => (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center space-x-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <div className="flex justify-between pt-2">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          </div>
         </div>
-      </div>
-    )
-  }
+      </CardContent>
+    </Card>
+  );
+
+  const StatCardSkeleton = () => (
+    <Card>
+      <CardContent className="p-4 text-center">
+        <Skeleton className="h-6 w-6 mx-auto mb-2" />
+        <Skeleton className="h-8 w-12 mx-auto mb-1" />
+        <Skeleton className="h-4 w-24 mx-auto" />
+      </CardContent>
+    </Card>
+  );
 
   // Show error state only for authenticated users
   if (user && error) {
@@ -233,7 +251,7 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
         </DialogContent>
       </Dialog>
 
-      {/* Header */}
+      {/* Header - Always visible, only Sign In/Out button shows loading */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -255,7 +273,9 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
               >
                 {currentView === 'quests' ? <User className="w-5 h-5" /> : <Trophy className="w-5 h-5" />}
               </Button>
-              {user ? (
+              {authLoading ? (
+                <Skeleton className="h-9 w-20 rounded-md" />
+              ) : user ? (
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   Sign Out
                 </Button>
@@ -270,29 +290,59 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Show demo notice for non-authenticated users */}
-        {/* {!user && (
-          <Card className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-blue-600" />
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  You're viewing demo content. <button 
-                    onClick={() => setShowLoginDialog(true)}
-                    className="underline font-medium hover:no-underline"
-                  >
-                    Sign in
-                  </button> to save your progress and track real data.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )} */}
-
         {isLoading ? (
-          <div className="text-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p>Loading your progress...</p>
+          <div className="space-y-6">
+            {/* Daily Progress Skeleton */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <Skeleton className="h-6 w-32" />
+                </div>
+                <Skeleton className="h-4 w-64" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quest List Skeleton */}
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-32 mb-2" />
+              {[...Array(4)].map((_, i) => (
+                <Card key={`quest-skeleton-${i}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Skeleton className="h-6 w-6" />
+                          <Skeleton className="h-5 w-48" />
+                        </div>
+                        <Skeleton className="h-4 w-64" />
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="flex items-center space-x-1">
+                            <Skeleton className="h-3 w-3 rounded-full" />
+                            <Skeleton className="h-5 w-16" />
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-4 w-12" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         ) : currentView === 'quests' ? (
           <>
@@ -338,9 +388,12 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Today's Quests</h2>
               {currentQuests.map(quest => (
-                <Card key={quest.id} className={`transition-all duration-300 ${
-                  quest.completed ? 'opacity-70 bg-green-50 dark:bg-green-900/20' : 'hover:shadow-md'
-                }`}>
+                <Card 
+                  key={quest.id} 
+                  className={`transition-all duration-300 ${
+                    quest.completed ? 'opacity-70 bg-green-50 dark:bg-green-900/20' : 'hover:shadow-md'
+                  }`}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-3">
                       <Button
@@ -406,7 +459,6 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Level and EXP */}
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary mb-2">
                       Level {currentStats.level}
@@ -495,4 +547,3 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
     </div>
   )
 }
-
