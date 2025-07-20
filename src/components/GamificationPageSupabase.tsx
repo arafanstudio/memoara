@@ -290,63 +290,9 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {isLoading ? (
-          <div className="space-y-6">
-            {/* Daily Progress Skeleton */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-5 w-5 rounded-full" />
-                  <Skeleton className="h-6 w-32" />
-                </div>
-                <Skeleton className="h-4 w-64" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                  <Skeleton className="h-2 w-full" />
-                  <Skeleton className="h-10 w-full rounded-lg" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quest List Skeleton */}
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-32 mb-2" />
-              {[...Array(4)].map((_, i) => (
-                <Card key={`quest-skeleton-${i}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <Skeleton className="h-10 w-10 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Skeleton className="h-6 w-6" />
-                          <Skeleton className="h-5 w-48" />
-                        </div>
-                        <Skeleton className="h-4 w-64" />
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="flex items-center space-x-1">
-                            <Skeleton className="h-3 w-3 rounded-full" />
-                            <Skeleton className="h-5 w-16" />
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Skeleton className="h-4 w-4" />
-                            <Skeleton className="h-4 w-12" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ) : currentView === 'quests' ? (
+        {currentView === 'quests' ? (
           <>
-            {/* Daily Quest Progress */}
+            {/* Daily Quest Progress - Bagian dinamis dibuat skeleton */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -358,95 +304,134 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {completedQuests} of {totalQuests} quests completed
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {Math.round(completionPercentage)}%
-                    </span>
-                  </div>
-                  <Progress value={completionPercentage} className="h-2" />
-                  
-                  {completedQuests === totalQuests && totalQuests > 0 && (
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <div className="text-2xl mb-2">🎉</div>
-                      <p className="font-semibold text-green-700 dark:text-green-300">
-                        All quests completed!
-                      </p>
-                      <p className="text-sm text-green-600 dark:text-green-400">
-                        Great job! Come back tomorrow for new challenges.
-                      </p>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-12" />
                     </div>
-                  )}
-                </div>
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {completedQuests} of {totalQuests} quests completed
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {Math.round(completionPercentage)}%
+                      </span>
+                    </div>
+                    <Progress value={completionPercentage} className="h-2" />
+                    
+                    {completedQuests === totalQuests && totalQuests > 0 && (
+                      <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <div className="text-2xl mb-2">🎉</div>
+                        <p className="font-semibold text-green-700 dark:text-green-300">
+                          All quests completed!
+                        </p>
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          Great job! Come back tomorrow for new challenges.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Daily Quests */}
+            {/* Daily Quests - Bagian dinamis dibuat skeleton */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Today's Quests</h2>
-              {currentQuests.map(quest => (
-                <Card 
-                  key={quest.id} 
-                  className={`transition-all duration-300 ${
-                    quest.completed ? 'opacity-70 bg-green-50 dark:bg-green-900/20' : 'hover:shadow-md'
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={`rounded-full border transition-all duration-300 ${
-                          quest.completed ? 'bg-green-100 dark:bg-green-900 border-green-500' : ''
-                        }`}
-                        onClick={() => handleQuestComplete(quest.id)}
-                        disabled={quest.completed}
-                      >
-                        {quest.completed ? (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-muted-foreground" />
-                        )}
-                      </Button>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-2xl">{quest.icon}</span>
-                          <h3 className={`font-semibold ${
-                            quest.completed ? 'line-through text-muted-foreground' : ''
-                          }`}>
-                            {quest.title}
-                          </h3>
-                        </div>
-                        <p className={`text-sm ${
-                          quest.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground'
-                        }`}>
-                          {quest.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between mt-3">
-                          <Badge variant="outline" className="text-xs">
-                            <div className={`w-2 h-2 rounded-full ${getQuestTypeColor(quest.type)} mr-1`}></div>
-                            {getQuestTypeName(quest.type)}
-                          </Badge>
-                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                            <Zap className="w-4 h-4" />
-                            <span>+{quest.expReward} EXP</span>
+              {isLoading ? (
+                [...Array(4)].map((_, i) => (
+                  <Card key={`quest-skeleton-${i}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Skeleton className="h-6 w-6" />
+                            <Skeleton className="h-5 w-48" />
+                          </div>
+                          <Skeleton className="h-4 w-64" />
+                          <div className="flex items-center justify-between pt-2">
+                            <div className="flex items-center space-x-1">
+                              <Skeleton className="h-3 w-3 rounded-full" />
+                              <Skeleton className="h-5 w-16" />
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Skeleton className="h-4 w-4" />
+                              <Skeleton className="h-4 w-12" />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                currentQuests.map(quest => (
+                  <Card 
+                    key={quest.id} 
+                    className={`transition-all duration-300 ${
+                      quest.completed ? 'opacity-70 bg-green-50 dark:bg-green-900/20' : 'hover:shadow-md'
+                    }`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`rounded-full border transition-all duration-300 ${
+                            quest.completed ? 'bg-green-100 dark:bg-green-900 border-green-500' : ''
+                          }`}
+                          onClick={() => handleQuestComplete(quest.id)}
+                          disabled={quest.completed}
+                        >
+                          {quest.completed ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </Button>
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="text-2xl">{quest.icon}</span>
+                            <h3 className={`font-semibold ${
+                              quest.completed ? 'line-through text-muted-foreground' : ''
+                            }`}>
+                              {quest.title}
+                            </h3>
+                          </div>
+                          <p className={`text-sm ${
+                            quest.completed ? 'line-through text-muted-foreground' : 'text-muted-foreground'
+                          }`}>
+                            {quest.description}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-3">
+                            <Badge variant="outline" className="text-xs">
+                              <div className={`w-2 h-2 rounded-full ${getQuestTypeColor(quest.type)} mr-1`}></div>
+                              {getQuestTypeName(quest.type)}
+                            </Badge>
+                            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                              <Zap className="w-4 h-4" />
+                              <span>+{quest.expReward} EXP</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </>
         ) : (
           <>
-            {/* Player Status */}
+            {/* Player Status - Bagian dinamis dibuat skeleton */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -458,87 +443,129 @@ export default function GamificationPageSupabase({ onBack }: GamificationPagePro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      Level {currentStats.level}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Experience</span>
-                        <span>{currentStats.exp} / {currentStats.expToNext}</span>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <Skeleton className="h-10 w-24 mx-auto mb-4" />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                        <Skeleton className="h-3 w-full" />
                       </div>
-                      <Progress 
-                        value={(currentStats.exp / currentStats.expToNext) * 100} 
-                        className="h-3"
-                      />
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-primary mb-2">
+                        Level {currentStats.level}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Experience</span>
+                          <span>{currentStats.exp} / {currentStats.expToNext}</span>
+                        </div>
+                        <Progress 
+                          value={(currentStats.exp / currentStats.expToNext) * 100} 
+                          className="h-3"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Stats */}
+            {/* Stats - Bagian dinamis dibuat skeleton */}
             <div className="grid grid-cols-2 gap-4">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Zap className="w-6 h-6 text-red-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-red-500">{currentStats.strength}</div>
-                  <p className="text-sm text-muted-foreground">Strength (STR)</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Shield className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-blue-500">{currentStats.agility}</div>
-                  <p className="text-sm text-muted-foreground">Agility (AGI)</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Heart className="w-6 h-6 text-green-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-green-500">{currentStats.vitality}</div>
-                  <p className="text-sm text-muted-foreground">Vitality (VIT)</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Brain className="w-6 h-6 text-purple-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-purple-500">{currentStats.intelligence}</div>
-                  <p className="text-sm text-muted-foreground">Intelligence (INT)</p>
-                </CardContent>
-              </Card>
+              {isLoading ? (
+                [...Array(4)].map((_, i) => (
+                  <Card key={`stat-skeleton-${i}`}>
+                    <CardContent className="p-4 text-center">
+                      <Skeleton className="h-6 w-6 mx-auto mb-2" />
+                      <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Zap className="w-6 h-6 text-red-500" />
+                      </div>
+                      <div className="text-2xl font-bold text-red-500">{currentStats.strength}</div>
+                      <p className="text-sm text-muted-foreground">Strength (STR)</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Shield className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <div className="text-2xl font-bold text-blue-500">{currentStats.agility}</div>
+                      <p className="text-sm text-muted-foreground">Agility (AGI)</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Heart className="w-6 h-6 text-green-500" />
+                      </div>
+                      <div className="text-2xl font-bold text-green-500">{currentStats.vitality}</div>
+                      <p className="text-sm text-muted-foreground">Vitality (VIT)</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <Brain className="w-6 h-6 text-purple-500" />
+                      </div>
+                      <div className="text-2xl font-bold text-purple-500">{currentStats.intelligence}</div>
+                      <p className="text-sm text-muted-foreground">Intelligence (INT)</p>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
             </div>
 
-            {/* Achievement Summary */}
+            {/* Achievement Summary - Bagian dinamis dibuat skeleton */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Today's Achievement</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-primary">{completedQuests}</div>
-                    <p className="text-sm text-muted-foreground">Quests Completed</p>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-primary">
-                      {currentQuests.reduce((total, quest) => total + (quest.completed ? quest.expReward : 0), 0)}
+                {isLoading ? (
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
                     </div>
-                    <p className="text-sm text-muted-foreground">EXP Gained</p>
+                    <div>
+                      <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-primary">{completedQuests}</div>
+                      <p className="text-sm text-muted-foreground">Quests Completed</p>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-primary">
+                        {currentQuests.reduce((total, quest) => total + (quest.completed ? quest.expReward : 0), 0)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">EXP Gained</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </>
