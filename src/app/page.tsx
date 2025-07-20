@@ -20,7 +20,7 @@ import LoginButtonSupabase from '@/components/LoginButtonSupabase'
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
 import { useSupabaseReminders } from '@/hooks/useSupabaseReminders'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function Home() {
   const isOnline = useOnlineStatus()
@@ -47,6 +47,7 @@ export default function Home() {
   const [isPWAInstalled, setIsPWAInstalled] = useState(false)
   const [notificationPermission, setNotificationPermission] = useState("default")
   const [showCustomAlert, setShowCustomAlert] = useState(false)
+  const [dragY, setDragY] = useState(0)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -601,7 +602,12 @@ export default function Home() {
                 size="icon"
                 onClick={() => setShowSettings(!showSettings)}
               >
-                <Settings className="w-5 h-5" />
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Settings className="w-5 h-5" />
+                </motion.div>
               </Button>
               <Button
                 variant="ghost"
@@ -617,129 +623,172 @@ export default function Home() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Settings Panel */}
-        {showSettings && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="w-5 h-5" />
-                <span>Settings</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="dark-mode">Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">Enable dark mode for eye comfort</p>
-                </div>
-                <Switch
-                  id="dark-mode"
-                  checked={isDarkMode}
-                  onCheckedChange={toggleDarkMode}
-                />
-              </div>
+        <AnimatePresence>
+          {showSettings && (
+            <>
+              {/* Overlay backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm z-40"
+                onClick={() => setShowSettings(false)}
+              />
               
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>App Status</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {isPWAInstalled 
-                        ? 'The app is already installed' 
-                        : 'The app is not installed yet'
-                      }
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={isPWAInstalled ? "default" : "secondary"}>
-                      {isPWAInstalled ? "Installed" : "Not Installed"}
-                    </Badge>
-                    {!isPWAInstalled && deferredPrompt && (
-                      <Button size="sm" onClick={installPWA}>
-                        Install
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* Settings panel */}
+              <motion.div
+                drag="y"
+                dragConstraints={{ top: 0 }}
+                onDrag={(_, info) => setDragY(Math.max(0, info.offset.y))}
+                onDragEnd={(_, info) => {
+                  if (info.offset.y > 100 || info.velocity.y > 500) {
+                    setShowSettings(false)
+                  } else {
+                    setDragY(0)
+                  }
+                }}
+                style={{ y: dragY }}
+                initial={{ y: "100%" }}
+                animate={{ y: dragY > 0 ? dragY : 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card shadow-xl border-t touch-none max-h-[90vh] overflow-y-auto"
+              >
+                <div className="p-4">
+                  {/* Handle drag indicator */}
+                  <motion.div 
+                    className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                  />
+                  
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Settings className="w-5 h-5" />
+                      <span>Settings</span>
+                    </CardTitle>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4 pb-8">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="dark-mode">Dark Mode</Label>
+                        <p className="text-sm text-muted-foreground">Enable dark mode for eye comfort</p>
+                      </div>
+                      <Switch
+                        id="dark-mode"
+                        checked={isDarkMode}
+                        onCheckedChange={toggleDarkMode}
+                      />
+                    </div>
+                    
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>App Status</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {isPWAInstalled 
+                              ? 'The app is already installed' 
+                              : 'The app is not installed yet'
+                            }
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={isPWAInstalled ? "default" : "secondary"}>
+                            {isPWAInstalled ? "Installed" : "Not Installed"}
+                          </Badge>
+                          {!isPWAInstalled && deferredPrompt && (
+                            <Button size="sm" onClick={installPWA}>
+                              Install
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Push Notification</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {notificationPermission === 'granted' 
-                        ? 'Notifications allowed' 
-                        : notificationPermission === 'denied'
-                        ? 'Notifications blocked'
-                        : 'Notifications not allowed yet'
-                      }
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={notificationPermission === 'granted' ? "default" : "secondary"}>
-                      {notificationPermission === 'granted' ? "Enabled" : "Disabled"}
-                    </Badge>
-                    {notificationPermission !== 'granted' && (
-                      <Button size="sm" onClick={handleNotificationPermission}>
-                        Allow
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Push Notification</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {notificationPermission === 'granted' 
+                              ? 'Notifications allowed' 
+                              : notificationPermission === 'denied'
+                              ? 'Notifications blocked'
+                              : 'Notifications not allowed yet'
+                            }
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={notificationPermission === 'granted' ? "default" : "secondary"}>
+                            {notificationPermission === 'granted' ? "Enabled" : "Disabled"}
+                          </Badge>
+                          {notificationPermission !== 'granted' && (
+                            <Button size="sm" onClick={handleNotificationPermission}>
+                              Allow
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Connection Status</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {isOnline 
-                        ? 'Online - Auto-sync enabled' 
-                        : 'Offline - Data saved locally'
-                      }
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {isOnline ? (
-                      <Wifi className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <WifiOff className="w-5 h-5 text-gray-500" />
-                    )}
-                    <Badge variant={isOnline ? "default" : "secondary"}>
-                      {isOnline ? "Online" : "Offline"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Connection Status</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {isOnline 
+                              ? 'Online - Auto-sync enabled' 
+                              : 'Offline - Data saved locally'
+                            }
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {isOnline ? (
+                            <Wifi className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <WifiOff className="w-5 h-5 text-gray-500" />
+                          )}
+                          <Badge variant={isOnline ? "default" : "secondary"}>
+                            {isOnline ? "Online" : "Offline"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Google Account</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {supabaseUser 
-                        ? `Connected as ${supabaseUser.email}` 
-                        : 'Link to sync reminders'
-                      }
-                      {supabaseError && (
-                        <span className="block text-xs text-red-600 dark:text-red-400">
-                          Error: {supabaseError}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {supabaseUser ? (
-                      <Badge variant="default">Connected</Badge>
-                    ) : (
-                      <LoginButtonSupabase />
-                    )}
-                  </div>
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Google Account</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {supabaseUser 
+                              ? `Connected as ${supabaseUser.email}` 
+                              : 'Link to sync reminders'
+                            }
+                            {supabaseError && (
+                              <span className="block text-xs text-red-600 dark:text-red-400">
+                                Error: {supabaseError}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {supabaseUser ? (
+                            <Badge variant="default">Connected</Badge>
+                          ) : (
+                            <LoginButtonSupabase />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
